@@ -25,14 +25,15 @@ transitionsColumns = ["nu", "unc1", "unc2", "nu1'", "nu2'", "nu3a'", "nu3b'", "n
 transitionsFiles = [
     "../completed_extractions/51WeSt/51WeSt-MARVEL.txt",
     "../completed_extractions/64LiGaDe/64LiGaDe-MARVEL.txt",
-    "../completed_extractions/86CoVaHe/86CoVaHe-MARVEL.txt",
     "../completed_extractions/75DeHe/75DeHe-MARVEL.txt",
+    "../completed_extractions/86CoVaHe/86CoVaHe-MARVEL.txt",
     "../completed_extractions/88FuDiJoHa/88FuDiJoHa-MARVEL.txt",
     "../completed_extractions/88KaSiJoKa/88KaSiJoKa-MARVEL.txt",
+    "../completed_extractions/03SnHoQu/03SnHoQu-MARVEL.txt",
     "../completed_extractions/06SnHoQu/06SnHoQu-MARVEL.txt",
-    "../completed_extractions/22CaDiFuTa/22CaDiFuTa-MARVEL.txt",
     "../completed_extractions/06EnMuBrPa/06EnMuBrPa-MARVEL.txt",
-    "../completed_extractions/03SnHoQu/03SnHoQu-MARVEL.txt"
+    "../completed_extractions/21MeBiDoKi/21MeBiDoKi-MARVEL.txt",
+    "../completed_extractions/22CaDiFuTa/22CaDiFuTa-MARVEL.txt",
 ]
 
 print("\n")
@@ -47,7 +48,8 @@ for transitionFile in transitionsFiles:
 
 print("\n")
 print("Done!")
-def removeTransitions(row, transitionsToRemove, transitionsToCorrect, transitionsToReassign, badLines, uncertaintyScaleFactor=2, repeatTolerance=3, maximumUncertainty=0.1):
+allTransitions = allTransitions[allTransitions["nu"].duplicated() == False]
+def removeTransitions(row, transitionsToRemove, transitionsToCorrect, transitionsToReassign, badLines, uncertaintyScaleFactor=1e1, repeatTolerance=3, maximumUncertainty=0.1):
     if row["Source"] in transitionsToRemove:
         row["nu"] = -row["nu"]
     if row["Source"] in transitionsToCorrect.keys():
@@ -69,16 +71,18 @@ def removeTransitions(row, transitionsToRemove, transitionsToCorrect, transition
     if row["Source"] in badLines["Line"].tolist():
         matchingBadLines = badLines[badLines["Line"] == row["Source"]]
         badLine = matchingBadLines.tail(1).squeeze()
-        if len(matchingBadLines) < repeatTolerance:
-            row["unc1"] = badLine["Uncertainty'"]
-            row["unc2"] = badLine["Uncertainty'"]
-        else:
-            if badLine["Ratio"] > uncertaintyScaleFactor:
-                row["unc1"] = badLine["Uncertainty'"]
-                row["unc2"] = badLine["Uncertainty'"]
-            else:
-                row["unc1"] = uncertaintyScaleFactor*badLine["Uncertainty"]
-                row["unc2"] = uncertaintyScaleFactor*badLine["Uncertainty"]
+        row["unc1"] = uncertaintyScaleFactor*badLine["Uncertainty"]
+        row["unc2"] = uncertaintyScaleFactor*badLine["Uncertainty"]
+        # if len(matchingBadLines) < repeatTolerance:
+        #     row["unc1"] = badLine["Uncertainty'"]
+        #     row["unc2"] = badLine["Uncertainty'"]
+        # else:
+            # if badLine["Ratio"] > uncertaintyScaleFactor:
+            #     row["unc1"] = badLine["Uncertainty"]*badLine["Ratio"]
+            #     row["unc2"] = badLine["Uncertainty"]*badLine["Ratio"]
+            # else:
+            #     row["unc1"] = uncertaintyScaleFactor*badLine["Uncertainty"]
+            #     row["unc2"] = uncertaintyScaleFactor*badLine["Uncertainty"]
     # if row["unc1"] >= maximumUncertainty:
     #     # Allow transitions above 10000 cm-1 to have a larger uncertainty
     #     if row["nu"] > 0 and row["nu"] < 10000:
@@ -92,6 +96,25 @@ transitionsToRemove = [
     "75DeHe.67",
     "75DeHe.47",
     "88FuDiJoHa.797",
+    "21MeBiDoKi.38",
+    "21MeBiDoKi.36",
+    "21MeBiDoKi.39",
+    "21MeBiDoKi.35",
+    "21MeBiDoKi.23",
+    "21MeBiDoKi.33",
+    "21MeBiDoKi.30",
+    "21MeBiDoKi.32",
+    "21MeBiDoKi.29",
+    "21MeBiDoKi.34",
+    "21MeBiDoKi.25",
+    "21MeBiDoKi.27",
+    "21MeBiDoKi.31",
+    "21MeBiDoKi.28",
+    "21MeBiDoKi.37",
+    "21MeBiDoKi.19",
+    "21MeBiDoKi.26",
+    "21MeBiDoKi.24",
+
 ]
 
 transitionsToCorrect = {
@@ -149,6 +172,7 @@ transitionsToReassign = {
 }
 
 badLines = pd.read_csv("BadLines.txt", delim_whitespace=True)
+badLines = badLines[badLines["Line"].duplicated(keep="last") == False]
 
 print("\n")
 print("Removing/Reassinging transitions...")
@@ -185,8 +209,6 @@ def convertUnits(row):
         row["nuCM"] = row["nu"]*1e6/29979245800
     return row
 transitions = transitions.parallel_apply(lambda x: convertUnits(x), result_type="expand", axis=1)
-# print(transitions.head(20).to_string(index=False))
-print("\n")
 print("Done!")
 print("\n")
 print("Applying Combination Differences...")
@@ -277,6 +299,8 @@ if readFromStatesFile:
 allTransitions = allTransitions.parallel_apply(lambda x: splitSegment(x), result_type="expand", axis=1)
 allTransitions = allTransitions.merge(segments, on="Segment")
 allTransitions = allTransitions.parallel_apply(lambda x: convertUnits(x), result_type="expand", axis=1)
+allTransitions = allTransitions[round(allTransitions["nuCM"], 6).duplicated() == False]
+# print(transitions.to_string(index=False))
 allTransitions = allTransitions.sort_values(by=["nuCM"])
 allTransitions = allTransitions[transitionsColumns]
 allTransitions = allTransitions.to_string(index=False, header=False)
