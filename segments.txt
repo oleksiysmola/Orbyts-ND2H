@@ -9,4 +9,5 @@
 06SnHoQu cm-1
 86CoVaHe cm-1
 03SnHoQu cm-1
+25TaLoFuCa cm-1
 MAGIC_22CaDiFuTa cm-1

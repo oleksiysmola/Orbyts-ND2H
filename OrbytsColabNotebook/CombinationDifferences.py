@@ -34,6 +34,7 @@ transitionsFiles = [
     "../completed_extractions/06EnMuBrPa/06EnMuBrPa-MARVEL.txt",
     "../completed_extractions/21MeBiDoKi/21MeBiDoKi-MARVEL.txt",
     "../completed_extractions/22CaDiFuTa/22CaDiFuTa-MARVEL.txt",
+    "../completed_extractions/25TaLoFuCa/25TaLoFuCa-MARVEL.txt",
 ]
 
 print("\n")
@@ -47,8 +48,11 @@ for transitionFile in transitionsFiles:
         allTransitions = pd.concat([allTransitions, transitionsToAdd])
 
 print("\n")
+print(allTransitions.tail().to_string(index=False))
+
+print("\n")
 print("Done!")
-allTransitions = allTransitions[allTransitions["nu"].duplicated() == False]
+# allTransitions = allTransitions[allTransitions["nu"].duplicated() == False]
 def removeTransitions(row, transitionsToRemove, transitionsToCorrect, transitionsToReassign, badLines, uncertaintyScaleFactor=1e1, repeatTolerance=3, maximumUncertainty=0.1):
     if row["Source"] in transitionsToRemove:
         row["nu"] = -row["nu"]
@@ -114,6 +118,19 @@ transitionsToRemove = [
     "21MeBiDoKi.19",
     "21MeBiDoKi.26",
     "21MeBiDoKi.24",
+    "86CoVaHe.55",
+    "86CoVaHe.612",
+    "86CoVaHe.62",
+    "86CoVaHe.585",
+    "86CoVaHe.603",
+    "86CoVaHe.660",
+    "86CoVaHe.661",
+    "86CoVaHe.130",
+    "88KaSiJoKa.85",
+    "86CoVaHe.620",
+    "88KaSiJoKa.5",
+    "25TaLoFuCa.7425",
+    "25TaLoFuCa.7426",
 
 ]
 
@@ -146,6 +163,7 @@ transitionsToCorrect = {
     "88FuDiJoHa.294": 109.825480,
     "88FuDiJoHa.319": 118.979720,
     "88KaSiJoKa.2": 869.41080,
+    "86CoVaHe.858": 954.80931,
 }
 
 # Transitions to reassign in format (Source Tag: [New Upper State Tag, New Lower State Tag])
@@ -182,7 +200,7 @@ print("Done!")
 # Filtering
 Jupper = 16
 transitions = allTransitions[allTransitions["nu"] > 0]
-# transitions = transitions[transitions["J'"] == Jupper]
+transitions = transitions[transitions["J'"] == Jupper]
 print(transitions.head(20).to_string(index=False))
 
 def assignStateTags(row):
@@ -299,7 +317,9 @@ if readFromStatesFile:
 allTransitions = allTransitions.parallel_apply(lambda x: splitSegment(x), result_type="expand", axis=1)
 allTransitions = allTransitions.merge(segments, on="Segment")
 allTransitions = allTransitions.parallel_apply(lambda x: convertUnits(x), result_type="expand", axis=1)
-allTransitions = allTransitions[round(allTransitions["nuCM"], 6).duplicated() == False]
+allTransitions["nuCM"] = round(allTransitions["nuCM"], 6)
+allTransitions = allTransitions[allTransitions[["nuCM", "nu1'", "nu2'", "nu3a'", "nu3b'", "nu4a'", "nu4b'", "J'", "Ka'", "Kc'", "inv'",
+                      "nu1\"", "nu2\"", "nu3a\"", "nu3b\"", "nu4a\"", "nu4b\"", "J\"", "Ka\"", "Kc\"","inv\""]].duplicated() == False]
 # print(transitions.to_string(index=False))
 allTransitions = allTransitions.sort_values(by=["nuCM"])
 allTransitions = allTransitions[transitionsColumns]
